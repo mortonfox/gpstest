@@ -85,26 +85,27 @@ fun MainScreen(context: Context) {
         Text(
             text = locationInfo
         )
+    }
 
-        if (requestPerms) {
-            RequestLocationPermissions(
-                onGranted = {
-                    getLocation(
-                        context = context,
-                        onSuccess = { lat, lon ->
-                            locationInfo = "Coords: $lat, $lon"
-                        },
-                        onFailure = { ex ->
-                            locationInfo = "Failed to get location: $ex"
-                        }
-                    )
-                },
-                onDenied = {
-                    locationInfo = "Location permissions denied"
-                }
-            )
-            requestPerms = false
-        }
+    if (requestPerms) {
+        RequestLocationPermissions(
+            onGranted = {
+                getLocation(
+                    context = context,
+                    onSuccess = { lat, lon ->
+                        locationInfo = "Coords: $lat, $lon"
+                    },
+                    onFailure = { ex ->
+                        locationInfo = "Failed to get location: $ex"
+                    }
+                )
+                requestPerms = false
+            },
+            onDenied = {
+                locationInfo = "Location permissions denied"
+                requestPerms = false
+            }
+        )
     }
 }
 
