@@ -44,10 +44,6 @@ class MainActivity : ComponentActivity() {
                     Surface(modifier = Modifier.padding(innerPadding)) {
                         MainScreen(this)
                     }
-//                    Greeting(
-//                        name = "Android",
-//                        modifier = Modifier.padding(innerPadding)
-//                    )
                 }
             }
         }
@@ -62,11 +58,11 @@ fun MainScreen(context: Context) {
     Column {
         Button(
             onClick = {
-                if (arePermisionsGranted(context)) {
+                if (arePermissionsGranted(context)) {
                     getLocation(
                         context = context,
                         onSuccess = { lat, lon ->
-                            locationInfo = "Coords: $lat, $lon"
+                            locationInfo = "Coordinates: $lat, $lon"
                         },
                         onFailure = { ex ->
                             locationInfo = "Failed to get location: $ex"
@@ -93,7 +89,7 @@ fun MainScreen(context: Context) {
                 getLocation(
                     context = context,
                     onSuccess = { lat, lon ->
-                        locationInfo = "Coords: $lat, $lon"
+                        locationInfo = "Coordinates: $lat, $lon"
                     },
                     onFailure = { ex ->
                         locationInfo = "Failed to get location: $ex"
@@ -109,7 +105,7 @@ fun MainScreen(context: Context) {
     }
 }
 
-fun arePermisionsGranted(context: Context): Boolean {
+fun arePermissionsGranted(context: Context): Boolean {
     return arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION
@@ -142,7 +138,7 @@ fun RequestLocationPermissions(
     onGranted: () -> Unit,
     onDenied: () -> Unit
 ) {
-    val laumcher = rememberLauncherForActivityResult(
+    val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissionsMap ->
         val allGranted = permissionsMap.values.all { it }
@@ -154,7 +150,7 @@ fun RequestLocationPermissions(
     }
 
     LaunchedEffect(Unit) {
-        laumcher.launch(
+        launcher.launch(
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
@@ -162,19 +158,3 @@ fun RequestLocationPermissions(
         )
     }
 }
-
-//@Composable
-//fun Greeting(name: String, modifier: Modifier = Modifier) {
-//    Text(
-//        text = "Hello $name!",
-//        modifier = modifier
-//    )
-//}
-//
-//@Preview(showBackground = true)
-//@Composable
-//fun GreetingPreview() {
-//    GpstestTheme {
-//        Greeting("Android")
-//    }
-//}
