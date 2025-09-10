@@ -1,6 +1,7 @@
 package com.mortonfox.gpstest
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -27,6 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.mortonfox.gpstest.ui.theme.GpstestTheme
 
 class MainActivity : ComponentActivity() {
@@ -38,7 +42,7 @@ class MainActivity : ComponentActivity() {
             GpstestTheme(darkTheme = true) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Surface(modifier = Modifier.padding(innerPadding)) {
-                        MainScreen()
+                        MainScreen(this)
                     }
 //                    Greeting(
 //                        name = "Android",
@@ -51,12 +55,27 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen() {
-    var locationInfo: Pair<Double, Double>? by remember { mutableStateOf(null) }
+fun MainScreen(context: Context) {
+    var locationInfo by remember { mutableStateOf("No location info") }
+    var requestPerms by remember { mutableStateOf(false) }
 
     Column {
         Button(
-            onClick = {}
+            onClick = {
+                if (arePermisionsGranted(context)) {
+                    getLocation(
+                        context = context,
+                        onSuccess = { lat, lon ->
+                            locationInfo = "Coords: $lat, $lon"
+                        },
+                        onFailure = { ex ->
+                            locationInfo = "Failed to get location: $ex"
+                        }
+                    )
+                } else {
+                    requestPerms = true
+                }
+            }
         ) {
             Text(text = "Get Location")
         }
@@ -64,15 +83,57 @@ fun MainScreen() {
         Spacer(Modifier.height(10.dp))
 
         Text(
-            text = if (locationInfo == null) "No location" else "${locationInfo!!.first}, ${locationInfo!!.second}"
+            text = locationInfo
         )
+
+        if (requestPerms) {
+            RequestLocationPermissions(
+                onGranted = {
+                    getLocation(
+                        context = context,
+                        onSuccess = { lat, lon ->
+                            locationInfo = "Coords: $lat, $lon"
+                        },
+                        onFailure = { ex ->
+                            locationInfo = "Failed to get location: $ex"
+                        }
+                    )
+                },
+                onDenied = {
+                    locationInfo = "Location permissions denied"
+                }
+            )
+            requestPerms = false
+        }
     }
 }
 
-fun locationPermisionsGranted(context: Context): Boolean {
-    return arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).all {
+fun arePermisionsGranted(context: Context): Boolean {
+    return arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    ).all {
         ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
     }
+}
+
+@SuppressLint("MissingPermission")
+fun getLocation(
+    context: Context,
+    onSuccess: (lat: Double, lon: Double) -> Unit,
+    onFailure: (ex: Exception) -> Unit
+) {
+    val client = LocationServices.getFusedLocationProviderClient(context)
+
+    client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+        .addOnSuccessListener {
+            if (it == null) {
+                onFailure(RuntimeException("null location result"))
+            } else {
+                onSuccess(it.latitude, it.longitude)
+            }
+        }
+        .addOnFailureListener(onFailure)
 }
 
 @Composable
@@ -84,11 +145,9 @@ fun RequestLocationPermissions(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissionsMap ->
         val allGranted = permissionsMap.values.all { it }
-
         if (allGranted) {
             onGranted()
-        }
-        else {
+        } else {
             onDenied()
         }
     }
