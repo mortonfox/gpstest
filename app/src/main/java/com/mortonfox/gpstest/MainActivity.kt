@@ -52,13 +52,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(context: Context) {
+    // For error messages or the coordinates.
     var locationInfo by remember { mutableStateOf("No location info") }
+
+    // This is for turning on and off the permissions requestor.
     var requestPerms by remember { mutableStateOf(false) }
 
     Column {
         Button(
             onClick = {
                 if (arePermissionsGranted(context)) {
+                    // Already have permissions. Go directly to location query.
                     getLocation(
                         context = context,
                         onSuccess = { lat, lon ->
@@ -69,6 +73,7 @@ fun MainScreen(context: Context) {
                         }
                     )
                 } else {
+                    // Otherwise we have to trigger the permissions requestor.
                     requestPerms = true
                 }
             }
@@ -106,6 +111,7 @@ fun MainScreen(context: Context) {
 }
 
 fun arePermissionsGranted(context: Context): Boolean {
+    // For some reason, we can't have only fine location access. We need both.
     return arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_COARSE_LOCATION
@@ -124,6 +130,7 @@ fun getLocation(
 
     client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
         .addOnSuccessListener {
+            // The location result is nullable. So that could happen.
             if (it == null) {
                 onFailure(RuntimeException("null location result"))
             } else {
@@ -138,6 +145,7 @@ fun RequestLocationPermissions(
     onGranted: () -> Unit,
     onDenied: () -> Unit
 ) {
+    // This launcher will pop up a dialog asking the user for location permissions.
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissionsMap ->
@@ -150,6 +158,7 @@ fun RequestLocationPermissions(
     }
 
     LaunchedEffect(Unit) {
+        // For some reason, we can't ask for only fine location access. We need to have both.
         launcher.launch(
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,

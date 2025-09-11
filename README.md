@@ -1,3 +1,3 @@
 # gpstest
 
-Demo Jetpack Compose Android app to test GPS reading.
+Demo Jetpack Compose Android app to test reading the GPS via location services.
